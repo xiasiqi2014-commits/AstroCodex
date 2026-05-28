@@ -257,8 +257,8 @@ function update3DPositions() {
     let targetRadiusFactor = 1.0;
     
     if (isReaderActive && isDesktop) {
-        targetCenterX = (width - 1100) / 2 + 150; // Align left centered in visual gap
-        targetRadiusFactor = 0.55; // scale down
+        targetCenterX = width / 2; // Center globe as it fades out
+        targetRadiusFactor = 0.6; // Scale down slightly
     } else if (isDesktop) {
         targetCenterX = (width - 380) / 2 + 380;
         targetRadiusFactor = 1.0;
