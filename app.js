@@ -10,7 +10,7 @@ const POSTS = [
         "readingTime": "9 分钟阅读",
         "excerpt": "从 HPA 为什么救不了突发雪崩、Load 飙高但 CPU 很闲的 I/O 排队真相、到带宽空闲却疯狂丢包的 Conntrack 陷阱——三大真实场景带你打通 Linux 内核底层的性能瓶颈逻辑。",
         "tags": [
-            "工程"
+            "系统"
         ],
         "file": "posts/sre-cpu-io-network-deep-dive.md",
         "emoji": "🐧",
@@ -24,7 +24,7 @@ const POSTS = [
         "readingTime": "11 分钟阅读",
         "excerpt": "一条带域名的 iptables 规则，在 NLB 被释放后引发了整个 VPN 系统的全局瘫痪。深入剖析 iptables 的三大致命缺陷（域名陷阱、全局锁、O(N) 线性查询），以及如何用 ipset 哈希表实现 O(1) 降维打击。",
         "tags": [
-            "工程"
+            "系统"
         ],
         "file": "posts/iptables-ipset-o1-architecture.md",
         "emoji": "🐧",
@@ -38,7 +38,7 @@ const POSTS = [
         "readingTime": "14 分钟阅读",
         "excerpt": "不背概念，用真实业务场景和日常比喻，彻底看透 TCP 三次握手与四次挥手背后的精妙逻辑——为什么不能两次握手？为什么断开要四次？TIME-WAIT 又是什么鬼？",
         "tags": [
-            "工程"
+            "网络"
         ],
         "file": "posts/tcp-handshake-wave-explained.md",
         "emoji": "🐧",
@@ -52,7 +52,7 @@ const POSTS = [
         "readingTime": "19 分钟阅读",
         "excerpt": "当 IoT 设备的 MQTT 流量经过 CDN 和云厂商 NLB 后，后端 EMQX 拿到的全是 CDN 的 IP。XFF 不能用、Proxy Protocol 双层冲突、TOA 也失败——一次真实的\"不可能三角\"排查复盘。",
         "tags": [
-            "工程"
+            "网络"
         ],
         "file": "posts/real-ip-lost-cdn-nlb-mqtt.md",
         "emoji": "🛠️",
@@ -66,7 +66,7 @@ const POSTS = [
         "readingTime": "8 分钟阅读",
         "excerpt": "Symantec 违规签发 30000 张证书被全球浏览器拉黑——这起真实事件揭示了 HTTPS 体系的终极梦魇。CT 证书透明度如何用\"阳光防腐\"的哲学，把 CA 关进透明的牢笼？",
         "tags": [
-            "工程"
+            "网络"
         ],
         "file": "posts/tls-certificate-series-4-ct.md",
         "emoji": "🛠️",
@@ -80,7 +80,7 @@ const POSTS = [
         "readingTime": "8 分钟阅读",
         "excerpt": "私钥泄露后，黑客只需一个假 WiFi 就能完美冒充你的网站。从笨重的 CRL 黑名单，到泄露隐私的 OCSP 实时查询，再到优雅绝伦的 OCSP Stapling——一场证书吊销技术的十年进化史。",
         "tags": [
-            "工程"
+            "网络"
         ],
         "file": "posts/tls-certificate-series-3-revocation.md",
         "emoji": "🛠️",
@@ -94,7 +94,7 @@ const POSTS = [
         "readingTime": "8 分钟阅读",
         "excerpt": "从叶子证书到根证书的层层担保，从根私钥的地下金库到 Let's Encrypt 的交叉签名\"借壳上市\"——拆解 HTTPS 信任体系的底层逻辑。",
         "tags": [
-            "工程"
+            "网络"
         ],
         "file": "posts/tls-certificate-series-2-trust.md",
         "emoji": "🛠️",
@@ -108,7 +108,7 @@ const POSTS = [
         "readingTime": "8 分钟阅读",
         "excerpt": "从 CN 的没落到 SAN 的全面上位，从单 IP 单站点的尴尬到 SNI 的破局——彻底搞懂 TLS 证书是如何锚定身份的。",
         "tags": [
-            "工程"
+            "网络"
         ],
         "file": "posts/tls-certificate-series-1-identity.md",
         "emoji": "🛠️",
@@ -122,7 +122,7 @@ const POSTS = [
         "readingTime": "6 分钟阅读",
         "excerpt": "深入解析 TCP RST 包的本质、三大常见触发场景（进程崩溃、中间件超时、全连接队列溢出），以及运维老鸟的\"破案 SOP\"排查三步法。",
         "tags": [
-            "工程"
+            "网络"
         ],
         "file": "posts/tcp-rst-packet-deep-dive.md",
         "emoji": "🐧",
@@ -136,7 +136,7 @@ const POSTS = [
         "readingTime": "9 分钟阅读",
         "excerpt": "从 TCP 四次挥手出发，用生动的比喻拆解 TIME_WAIT 的两大存在理由——保证最后 ACK 的可靠送达与防止旧报文污染新连接，并给出高并发下 TIME_WAIT 堆积的实战调优方案。",
         "tags": [
-            "设计"
+            "网络"
         ],
         "file": "posts/tcp-time-wait-design.md",
         "emoji": "🐧",
@@ -150,7 +150,7 @@ const POSTS = [
         "readingTime": "8 分钟阅读",
         "excerpt": "很多运维遇到高并发丢包，第一反应去改 ulimit，结果请求依然超时。本文深入解析 Linux 内核 conntrack 连接追踪与应用层文件句柄的\"两道门\"机制，给出完整的高并发调优方案。",
         "tags": [
-            "工程"
+            "系统"
         ],
         "file": "posts/linux-ulimit-conntrack-high-concurrency.md",
         "emoji": "🐧",
@@ -164,7 +164,7 @@ const POSTS = [
         "readingTime": "18 分钟阅读",
         "excerpt": "通过一个真实的 SSL 通配符证书案例，深入解析 Nginx 的 default_server 兜底机制，揭示 server_name 并非严格匹配的真相。",
         "tags": [
-            "工程"
+            "系统"
         ],
         "file": "posts/nginx-server-name-default-server.md",
         "emoji": "🛠️",
@@ -178,7 +178,7 @@ const POSTS = [
         "readingTime": "1 分钟阅读",
         "excerpt": "我的第一篇博客文章。",
         "tags": [
-            "工程"
+            "系统"
         ],
         "file": "posts/hello-world.md",
         "emoji": "✨",
