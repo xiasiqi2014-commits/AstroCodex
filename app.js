@@ -208,14 +208,16 @@ function initStarfield() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     
-    // Generate star coordinates
+    // Generate star coordinates with twinkling phase
     stars = [];
     for (let i = 0; i < numStars; i++) {
         stars.push({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
             size: Math.random() * 1.5,
-            speed: 0.1 + Math.random() * 0.2
+            speed: 0.1 + Math.random() * 0.2,
+            phase: Math.random() * Math.PI * 2,
+            twinkleSpeed: 0.01 + Math.random() * 0.02
         });
     }
     
@@ -244,8 +246,12 @@ function animateStarfield() {
     // Render & update particles in a single path
     ctx.beginPath();
     stars.forEach(star => {
-        ctx.moveTo(star.x + star.size, star.y);
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        // Twinkle by oscillating the radius
+        star.phase += star.twinkleSpeed;
+        const currentSize = star.size * (0.5 + 0.5 * Math.sin(star.phase));
+        
+        ctx.moveTo(star.x + currentSize, star.y);
+        ctx.arc(star.x, star.y, currentSize, 0, Math.PI * 2);
         
         // Slowly float particles downwards
         star.y += star.speed;
@@ -326,6 +332,15 @@ function renderConstellations() {
         glow.setAttribute("r", "20");
         glow.setAttribute("class", "constellation-glow");
         group.appendChild(glow);
+        
+        // Outer tech ring
+        const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        ring.setAttribute("cx", node.x);
+        ring.setAttribute("cy", node.y);
+        ring.setAttribute("r", isActiveNode ? "16" : "12");
+        ring.setAttribute("class", "constellation-ring");
+        ring.setAttribute("style", `transform-origin: ${node.x}px ${node.y}px`);
+        group.appendChild(ring);
         
         // Outer core node
         const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -608,7 +623,12 @@ function processCodeBlocks(container) {
         const header = document.createElement('div');
         header.className = 'code-block-header';
         header.innerHTML = `
-            <span>${lang.toUpperCase()}</span>
+            <div class="code-window-controls">
+                <span class="dot close"></span>
+                <span class="dot minimize"></span>
+                <span class="dot expand"></span>
+                <span class="code-lang-label">${lang.toUpperCase()}</span>
+            </div>
             <button class="copy-btn">COPY</button>
         `;
         pre.parentNode.insertBefore(header, pre);
