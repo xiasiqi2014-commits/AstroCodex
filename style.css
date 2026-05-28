@@ -1101,25 +1101,24 @@ body.light-theme .markdown-body tr:hover td {
 
     #hud-sidebar {
         position: fixed;
-        top: 12px;
+        top: auto;
+        bottom: 220px;
         left: 12px;
         width: calc(100% - 24px);
-        height: calc(100% - 220px);
+        height: 28vh;
         z-index: 3;
     }
 
-    #constellation-svg, #space-canvas {
-        opacity: 0.15; /* Subtly fade out constellation on tablet */
-    }
-}
-
-@media (max-width: 768px) {
-    #constellation-svg, #space-canvas {
-        display: none !important; /* Hide constellation map on phone screens */
+    #constellation-svg {
+        display: block !important;
+        opacity: 0.8 !important;
+        pointer-events: auto !important;
     }
     
-    #hud-sidebar {
-        height: calc(100% - 240px);
+    #space-canvas {
+        display: block !important;
+        opacity: 0.8 !important;
+        pointer-events: none !important;
     }
 }
 

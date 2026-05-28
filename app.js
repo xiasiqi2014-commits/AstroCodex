@@ -248,7 +248,6 @@ function update3DPositions() {
     const width = window.innerWidth;
     const height = window.innerHeight;
     
-    // Shift center X to the left if reader is active (morphing splitscreen layout!)
     const isReaderActive = document.body.classList.contains('reader-active');
     const isDesktop = width > 1024;
     
@@ -256,12 +255,27 @@ function update3DPositions() {
     let targetCenterY = height / 2;
     let targetRadiusFactor = 1.0;
     
-    if (isReaderActive && isDesktop) {
-        targetCenterX = width / 2; // Center globe as it fades out
-        targetRadiusFactor = 0.6; // Scale down slightly
-    } else if (isDesktop) {
-        targetCenterX = (width - 380) / 2 + 380;
-        targetRadiusFactor = 1.0;
+    if (isDesktop) {
+        if (isReaderActive) {
+            targetCenterX = width / 2;
+            targetRadiusFactor = 0.6;
+        } else {
+            targetCenterX = (width - 380) / 2 + 380;
+            targetRadiusFactor = 1.0;
+        }
+    } else {
+        // Mobile / Tablet layout
+        const isMobile = width <= 768;
+        if (isMobile) {
+            targetCenterX = width / 2;
+            targetCenterY = height * 0.28; // Center within the top half of the screen
+            targetRadiusFactor = 0.55; // Scale down to fit screen width
+        } else {
+            // Tablet
+            targetCenterX = width / 2;
+            targetCenterY = height * 0.35;
+            targetRadiusFactor = 0.7;
+        }
     }
     
     // Smoothly interpolate layout center and scale factor
