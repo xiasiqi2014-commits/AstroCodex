@@ -1,38 +1,8 @@
 // ==========================================================================
-// Constellation Map - Interactive Space Engine & Blog Router
+// AstroCodex - Interactive Space Engine & Blog Router
 // ==========================================================================
 
 const POSTS = [
-    {
-        "id": "the-art-of-minimalist-css",
-        "title": "极简 CSS 艺术与暗影美学",
-        "date": "2026-05-28",
-        "readingTime": "5 分钟阅读",
-        "excerpt": "深入探讨如何利用纯 Vanilla CSS 以及磨砂玻璃质感（Glassmorphism）打造高规格、无冗余的排版空间，释放文字的力量。",
-        "tags": [
-            "设计",
-            "CSS"
-        ],
-        "file": "posts/the-art-of-minimalist-css.md",
-        "emoji": "🎨",
-        "xOffset": 130,
-        "yOffset": 0
-    },
-    {
-        "id": "designing-for-the-future",
-        "title": "面向未来 Web 的系统性思考",
-        "date": "2026-05-27",
-        "readingTime": "8 分钟阅读",
-        "excerpt": "探索静态页面渲染（JAMstack）、Cloudflare Edge Server 算力下沉，以及极致阅读界面的边界线。",
-        "tags": [
-            "工程",
-            "Web"
-        ],
-        "file": "posts/designing-for-the-future.md",
-        "emoji": "🚀",
-        "xOffset": 0,
-        "yOffset": 130
-    },
     {
         "id": "sre-cpu-io-network-deep-dive",
         "title": "别再只会敲 kubectl 了：一次打通 CPU、磁盘 I/O 与网络底层的 SRE 进阶笔记",
