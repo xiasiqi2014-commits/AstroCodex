@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constellation Orbit - 互动星图博客</title>
+    <!-- Google Fonts: Playfair Display (Serif), Plus Jakarta Sans, and Share Tech Mono (HUD monospace) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- PrismJS Theme for Syntax Highlighting -->
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <script>
+        // Pre-initialize theme to avoid flashing
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.body.classList.remove('dark-theme');
+            document.body.classList.add('light-theme');
+        }
+    </script>
+
+    <!-- HTML5 Canvas for Starfield Nebula -->
+    <canvas id="space-canvas"></canvas>
+
+    <!-- SVG Overlay for Constellation Orbits and Nodes -->
+    <svg id="constellation-svg"></svg>
+
+    <!-- Floating HUD Hover Preview Tooltip -->
+    <div id="hud-tooltip" class="hud-card tooltip-hidden">
+        <!-- Content injected dynamically on node hover -->
+    </div>
+
+    <!-- Left Holographic Directory Sidebar -->
+    <aside id="hud-sidebar" class="hud-card">
+        <div class="sidebar-header">
+            <span class="header-main">星域索引 DIRECTORY</span>
+            <span class="header-sub" id="sidebar-counter">TOTAL: -- NODES</span>
+        </div>
+        <div class="sidebar-list" id="sidebar-list-slot">
+            <!-- Injected by app.js -->
+        </div>
+    </aside>
+
+    <!-- Bottom Holographic Control Panel -->
+    <div id="hud-bottom-bar" class="hud-panel">
+        <div class="hud-brand">
+            <a href="#/" class="hud-logo">
+                <span class="logo-core">CONSTELLATION</span>
+                <span class="logo-suffix">v1.0</span>
+            </a>
+        </div>
+        
+        <!-- Center Filters -->
+        <div class="hud-controls">
+            <div class="hud-search-wrapper">
+                <input type="text" id="hud-search" placeholder="检索星路..." class="hud-input">
+            </div>
+            <div class="hud-tags">
+                <button class="hud-tag-btn active" data-category="all">ALL NODES</button>
+                <button class="hud-tag-btn" data-category="设计">ART/DESIGN</button>
+                <button class="hud-tag-btn" data-category="工程">SYS/ENG</button>
+            </div>
+        </div>
+
+        <!-- Right Utilities -->
+        <div class="hud-utils">
+            <button id="theme-toggle" class="hud-util-btn" title="反转星域亮度">
+                <!-- Sun icon -->
+                <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <!-- Moon icon -->
+                <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <span class="hud-coordinate-info" id="hud-coordinates">X: 000 | Y: 000</span>
+        </div>
+    </div>
+
+    <!-- Side-sliding Article Reader Sheet -->
+    <div id="reader-sheet" class="reader-hidden">
+        <button id="reader-close" class="reader-close-btn" title="关闭页面">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        
+        <div class="reader-scrollbar-progress">
+            <div id="reader-progress-bar"></div>
+        </div>
+
+        <div class="reader-layout">
+            <!-- Table of contents dynamically placed here -->
+            <aside class="reader-toc-sidebar">
+                <div class="reader-toc-title">INDEX INDEX</div>
+                <ul class="reader-toc-list" id="reader-toc-slot"></ul>
+            </aside>
+
+            <!-- Main text content -->
+            <article class="reader-body-container">
+                <header class="reader-header">
+                    <div class="reader-meta" id="reader-meta-slot">DATE -- | TIME --</div>
+                    <h1 class="reader-title" id="reader-title-slot">Loading Constellation...</h1>
+                </header>
+                <div class="markdown-body" id="reader-markdown-slot">
+                    <!-- Markdown injected here -->
+                </div>
+            </article>
+        </div>
+    </div>
+    
+    <!-- Image Lightbox Overlay -->
+    <div id="lightbox-overlay">
+        <img id="lightbox-img" src="" alt="Zoomed Image">
+    </div>
+
+    <!-- Markdown Parser: marked -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Syntax Highlighting: prismjs -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <!-- Main Application script -->
+    <script src="app.js"></script>
+</body>
+</html>
