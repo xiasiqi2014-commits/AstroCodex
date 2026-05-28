@@ -192,6 +192,317 @@ let activeCategory = 'all';
 let searchQuery = '';
 let activePostId = null;
 
+// 3D Star Globe Rotation State
+let rotateX = -0.3; // Initial rotation angles in radians
+let rotateY = 0.5;
+let targetRotateX = -0.3;
+let targetRotateY = 0.5;
+let isDragging = false;
+let isMouseDown = false;
+let startMouseX = 0;
+let startMouseY = 0;
+let baseRotateX = 0;
+let baseRotateY = 0;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let velocityX = 0;
+let velocityY = 0;
+
+// 3D Layout Transition State
+let layoutCenterX = window.innerWidth / 2;
+let layoutCenterY = window.innerHeight / 2;
+let layoutRadiusFactor = 1.0;
+
+// Fibonacci Sphere Distribution to place nodes in 3D
+function initialize3DCoordinates() {
+    const radius = 220; // sphere radius
+    const phi = Math.PI * (3 - Math.sqrt(5)); // golden angle in radians
+    const n = POSTS.length;
+    
+    // Sort POSTS chronologically (oldest first) to build a timeline starpath
+    const sortedPosts = [...POSTS].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    for (let i = 0; i < n; i++) {
+        const y = 1 - (i / (n - 1)) * 2; // y goes from 1 to -1
+        const radiusAtY = Math.sqrt(1 - y * y); // radius of circle at y
+        const theta = phi * i; // golden angle increment
+        
+        const x = Math.cos(theta) * radiusAtY;
+        const z = Math.sin(theta) * radiusAtY;
+        
+        const post = POSTS.find(p => p.id === sortedPosts[i].id);
+        post.x3d = x * radius;
+        post.y3d = y * radius;
+        post.z3d = z * radius;
+    }
+}
+
+// Call distribution immediately
+initialize3DCoordinates();
+
+// 3D Projection Math & DOM updater
+function update3DPositions() {
+    const svg = document.getElementById('constellation-svg');
+    if (!svg) return;
+    
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    // Shift center X to the left if reader is active (morphing splitscreen layout!)
+    const isReaderActive = document.body.classList.contains('reader-active');
+    const isDesktop = width > 1024;
+    
+    let targetCenterX = width / 2;
+    let targetCenterY = height / 2;
+    let targetRadiusFactor = 1.0;
+    
+    if (isReaderActive && isDesktop) {
+        targetCenterX = (width - 1100) / 2 + 150; // Align left centered in visual gap
+        targetRadiusFactor = 0.55; // scale down
+    } else if (isDesktop) {
+        targetCenterX = (width - 380) / 2 + 380;
+        targetRadiusFactor = 1.0;
+    }
+    
+    // Smoothly interpolate layout center and scale factor
+    layoutCenterX += (targetCenterX - layoutCenterX) * 0.08;
+    layoutCenterY += (targetCenterY - layoutCenterY) * 0.08;
+    layoutRadiusFactor += (targetRadiusFactor - layoutRadiusFactor) * 0.08;
+    
+    // Handle auto-rotation and inertia damping
+    if (isMouseDown || isDragging) {
+        targetRotateX += velocityX;
+        targetRotateY += velocityY;
+        velocityX *= 0.95;
+        velocityY *= 0.95;
+    } else {
+        targetRotateY += 0.0012; // Gentle auto-spin
+    }
+    
+    // Apply interpolation
+    rotateX += (targetRotateX - rotateX) * 0.1;
+    rotateY += (targetRotateY - rotateY) * 0.1;
+    
+    const cosX = Math.cos(rotateX);
+    const sinX = Math.sin(rotateX);
+    const cosY = Math.cos(rotateY);
+    const sinY = Math.sin(rotateY);
+    
+    const distance = 400; // perspective distance
+    
+    // 1. Calculate projected coordinates for each post
+    const projectedNodes = POSTS.map(post => {
+        // Rotate around Y axis
+        let x1 = post.x3d * cosY - post.z3d * sinY;
+        let z1 = post.z3d * cosY + post.x3d * sinY;
+        
+        // Rotate around X axis
+        let y2 = post.y3d * cosX - z1 * sinX;
+        let z2 = z1 * cosX + post.y3d * sinX;
+        
+        // Project to 2D screen using interpolated layout center & scale
+        const scale = (distance / (distance + z2)) * layoutRadiusFactor;
+        const x = layoutCenterX + x1 * scale;
+        const y = layoutCenterY + y2 * scale;
+        
+        return {
+            id: post.id,
+            x: x,
+            y: y,
+            z: z2,
+            scale: scale
+        };
+    });
+    
+    // 2. Update SVG nodes in-place
+    projectedNodes.forEach(node => {
+        const group = document.getElementById(`node-group-${node.id}`);
+        if (!group) return;
+        
+        const postObj = POSTS.find(p => p.id === node.id);
+        const matchesCategory = activeCategory === 'all' || postObj.tags.includes(activeCategory);
+        const matchesSearch = postObj.title.toLowerCase().includes(searchQuery) || 
+                              postObj.excerpt.toLowerCase().includes(searchQuery);
+        
+        const isVisible = matchesCategory && matchesSearch;
+        
+        // Calculate depth opacity (nodes in the background z > 0 are faded)
+        const depthOpacity = 0.2 + 0.8 * ((220 - node.z) / 440);
+        const opacity = isVisible ? depthOpacity : 0.05;
+        
+        group.setAttribute("style", `opacity: ${opacity}; pointer-events: ${isVisible ? 'auto' : 'none'};`);
+        
+        // Glow circle
+        const glow = group.querySelector('.constellation-glow');
+        if (glow) {
+            glow.setAttribute("cx", node.x);
+            glow.setAttribute("cy", node.y);
+            glow.setAttribute("r", 20 * node.scale);
+        }
+        
+        // Orbit ring
+        const ring = group.querySelector('.constellation-ring');
+        if (ring) {
+            const isActiveNode = activePostId === node.id;
+            ring.setAttribute("cx", node.x);
+            ring.setAttribute("cy", node.y);
+            ring.setAttribute("r", (isActiveNode ? 16 : 12) * node.scale);
+            ring.setAttribute("style", `transform-origin: ${node.x}px ${node.y}px`);
+        }
+        
+        // Core circle
+        const core = group.querySelector('.constellation-node');
+        if (core) {
+            const isActiveNode = activePostId === node.id;
+            core.setAttribute("cx", node.x);
+            core.setAttribute("cy", node.y);
+            core.setAttribute("r", (isActiveNode ? 8 : 6) * node.scale);
+        }
+        
+        // Label text
+        const text = group.querySelector('.constellation-label');
+        if (text) {
+            text.setAttribute("x", node.x);
+            text.setAttribute("y", node.y + 24 * node.scale);
+            // Hide labels of nodes in the deep background to avoid clutter
+            if (node.z > 80 && activePostId !== node.id) {
+                text.style.display = 'none';
+            } else {
+                text.style.display = 'block';
+            }
+        }
+    });
+    
+    // 3. Update connecting lines in-place
+    const filteredNodes = projectedNodes.filter(node => {
+        const post = POSTS.find(p => p.id === node.id);
+        const matchesCategory = activeCategory === 'all' || post.tags.includes(activeCategory);
+        const matchesSearch = post.title.toLowerCase().includes(searchQuery) || 
+                              post.excerpt.toLowerCase().includes(searchQuery);
+        return matchesCategory && matchesSearch;
+    });
+    
+    // Sort them chronologically to build a chronological path
+    filteredNodes.sort((a, b) => {
+        const postA = POSTS.find(p => p.id === a.id);
+        const postB = POSTS.find(p => p.id === b.id);
+        return new Date(postA.date) - new Date(postB.date);
+    });
+    
+    const lines = svg.querySelectorAll('.constellation-line');
+    lines.forEach(l => l.remove());
+    
+    if (filteredNodes.length > 1) {
+        for (let i = 0; i < filteredNodes.length - 1; i++) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", filteredNodes[i].x);
+            line.setAttribute("y1", filteredNodes[i].y);
+            line.setAttribute("x2", filteredNodes[i+1].x);
+            line.setAttribute("y2", filteredNodes[i+1].y);
+            
+            const isLineActive = activePostId === filteredNodes[i].id || activePostId === filteredNodes[i+1].id;
+            line.setAttribute("class", `constellation-line ${isLineActive ? 'active' : ''}`);
+            
+            const averageZ = (filteredNodes[i].z + filteredNodes[i+1].z) / 2;
+            const lineOpacity = 0.25 * ((220 - averageZ) / 440);
+            line.style.opacity = isLineActive ? 0.6 : lineOpacity;
+            
+            svg.appendChild(line);
+        }
+    }
+}
+
+// Drag & Spin Controls
+function initDragControls() {
+    const svg = document.getElementById('constellation-svg');
+    if (!svg) return;
+    
+    svg.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.constellation-node-group')) return;
+        
+        isDragging = true;
+        isMouseDown = true;
+        startMouseX = e.clientX;
+        startMouseY = e.clientY;
+        baseRotateX = targetRotateX;
+        baseRotateY = targetRotateY;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        velocityX = 0;
+        velocityY = 0;
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+        if (!isMouseDown) return;
+        
+        const deltaX = e.clientX - startMouseX;
+        const deltaY = e.clientY - startMouseY;
+        
+        const sensitivity = 0.005;
+        targetRotateY = baseRotateY + deltaX * sensitivity;
+        targetRotateX = baseRotateX - deltaY * sensitivity;
+        
+        targetRotateX = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, targetRotateX));
+        
+        velocityX = (e.clientY - lastMouseY) * -sensitivity * 0.5;
+        velocityY = (e.clientX - lastMouseX) * sensitivity * 0.5;
+        
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+    
+    window.addEventListener('mouseup', () => {
+        isMouseDown = false;
+        setTimeout(() => {
+            isDragging = false;
+        }, 100);
+    });
+    
+    svg.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.constellation-node-group')) return;
+        if (e.touches.length === 0) return;
+        
+        isDragging = true;
+        isMouseDown = true;
+        const touch = e.touches[0];
+        startMouseX = touch.clientX;
+        startMouseY = touch.clientY;
+        baseRotateX = targetRotateX;
+        baseRotateY = targetRotateY;
+        lastMouseX = touch.clientX;
+        lastMouseY = touch.clientY;
+        velocityX = 0;
+        velocityY = 0;
+    });
+    
+    window.addEventListener('touchmove', (e) => {
+        if (!isMouseDown) return;
+        if (e.touches.length === 0) return;
+        
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - startMouseX;
+        const deltaY = touch.clientY - startMouseY;
+        
+        const sensitivity = 0.008;
+        targetRotateY = baseRotateY + deltaX * sensitivity;
+        targetRotateX = baseRotateX - deltaY * sensitivity;
+        targetRotateX = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, targetRotateX));
+        
+        velocityX = (touch.clientY - lastMouseY) * -sensitivity * 0.5;
+        velocityY = (touch.clientX - lastMouseX) * sensitivity * 0.5;
+        
+        lastMouseX = touch.clientX;
+        lastMouseY = touch.clientY;
+    }, { passive: true });
+    
+    window.addEventListener('touchend', () => {
+        isMouseDown = false;
+        setTimeout(() => {
+            isDragging = false;
+        }, 100);
+    });
+}
+
 // ==========================================================================
 // HTML5 Canvas Starfield Engine
 // ==========================================================================
@@ -206,6 +517,7 @@ function initStarfield() {
     ctx = canvas.getContext('2d');
     
     resizeCanvas();
+    window.removeEventListener('resize', resizeCanvas);
     window.addEventListener('resize', resizeCanvas);
     
     // Generate star coordinates with twinkling phase
@@ -240,7 +552,7 @@ function animateStarfield() {
     
     const isLightTheme = document.body.classList.contains('light-theme');
     
-    // Set particle color (background radial gradient is handled by CSS)
+    // Set particle color
     ctx.fillStyle = isLightTheme ? 'rgba(109, 40, 217, 0.4)' : 'rgba(255, 255, 255, 0.8)';
     
     // Render & update particles in a single path
@@ -262,98 +574,44 @@ function animateStarfield() {
     });
     ctx.fill();
     
+    // Continuous 3D position calculation & render call
+    update3DPositions();
+    
     animationFrameId = requestAnimationFrame(animateStarfield);
 }
 
-// ==========================================================================
-// SVG Constellation & Map Node Renderer
-// ==========================================================================
 function renderConstellations() {
     const svg = document.getElementById('constellation-svg');
     if (!svg) return;
     
     svg.innerHTML = ''; // Clear SVG contents
     
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    
-    // Shift center X to the right of the sidebar on desktop screens
-    const isDesktop = width > 1024;
-    const centerX = isDesktop ? ((width - 380) / 2 + 380) : (width / 2);
-    const centerY = height / 2;
-    
-    // 1. Calculate positions for each node
-    const nodes = POSTS.map(post => {
-        const responsiveFactor = width < 768 ? 0.6 : (width < 1200 ? 0.8 : 1.0);
-        return {
-            ...post,
-            x: centerX + (post.xOffset * responsiveFactor),
-            y: centerY + (post.yOffset * responsiveFactor)
-        };
-    });
-    
-    // 2. Render connecting Vector Paths
-    const filteredNodes = nodes.filter(node => {
-        const matchesCategory = activeCategory === 'all' || node.tags.includes(activeCategory);
-        const matchesSearch = node.title.toLowerCase().includes(searchQuery) || 
-                              node.excerpt.toLowerCase().includes(searchQuery);
-        return matchesCategory && matchesSearch;
-    });
-    
-    if (filteredNodes.length > 1) {
-        for (let i = 0; i < filteredNodes.length - 1; i++) {
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("x1", filteredNodes[i].x);
-            line.setAttribute("y1", filteredNodes[i].y);
-            line.setAttribute("x2", filteredNodes[i+1].x);
-            line.setAttribute("y2", filteredNodes[i+1].y);
-            line.setAttribute("class", "constellation-line active");
-            svg.appendChild(line);
-        }
-    }
-    
-    // 3. Render Star Nodes
-    nodes.forEach(node => {
-        const matchesCategory = activeCategory === 'all' || node.tags.includes(activeCategory);
-        const matchesSearch = node.title.toLowerCase().includes(searchQuery) || 
-                              node.excerpt.toLowerCase().includes(searchQuery);
+    // Build the DOM groups for all articles
+    POSTS.forEach(node => {
         const isActiveNode = activePostId === node.id;
         
         // Group Container
         const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
         group.setAttribute("id", `node-group-${node.id}`);
         group.setAttribute("class", `constellation-node-group ${isActiveNode ? 'active' : ''}`);
-        group.setAttribute("style", `opacity: ${matchesCategory && matchesSearch ? 1 : 0.15}`);
         
         // Glow circle (underlay)
         const glow = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        glow.setAttribute("cx", node.x);
-        glow.setAttribute("cy", node.y);
-        glow.setAttribute("r", "20");
         glow.setAttribute("class", "constellation-glow");
         group.appendChild(glow);
         
         // Outer tech ring
         const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        ring.setAttribute("cx", node.x);
-        ring.setAttribute("cy", node.y);
-        ring.setAttribute("r", isActiveNode ? "16" : "12");
         ring.setAttribute("class", "constellation-ring");
-        ring.setAttribute("style", `transform-origin: ${node.x}px ${node.y}px`);
         group.appendChild(ring);
         
         // Outer core node
         const core = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        core.setAttribute("cx", node.x);
-        core.setAttribute("cy", node.y);
-        core.setAttribute("r", isActiveNode ? "8" : "6");
         core.setAttribute("class", "constellation-node");
         group.appendChild(core);
         
         // Star symbol emoji or label
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", node.x);
-        text.setAttribute("y", node.y + 24);
         text.setAttribute("text-anchor", "middle");
         text.setAttribute("class", "constellation-label");
         text.textContent = `${node.emoji} ${node.title}`;
@@ -361,14 +619,14 @@ function renderConstellations() {
         
         // Node hover / click event hooks
         group.addEventListener('mouseenter', (e) => {
-            showTooltip(e, node);
+            const bbox = group.getBoundingClientRect();
+            showTooltipAtCoords(bbox.left + bbox.width / 2, bbox.top, node);
             const sidebarItem = document.getElementById(`sidebar-item-${node.id}`);
             if (sidebarItem) {
                 sidebarItem.classList.add('hover-active');
                 sidebarItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         });
-        group.addEventListener('mousemove', (e) => updateTooltipPos(e));
         group.addEventListener('mouseleave', () => {
             hideTooltip();
             const sidebarItem = document.getElementById(`sidebar-item-${node.id}`);
@@ -382,6 +640,9 @@ function renderConstellations() {
         
         svg.appendChild(group);
     });
+    
+    // Position immediately based on 3D projections
+    update3DPositions();
 
     // Sync left sidebar rendering
     renderSidebarList();
@@ -729,6 +990,9 @@ function handleSheetScroll() {
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Particle Simulation
     initStarfield();
+    
+    // Drag and spin controls
+    initDragControls();
     
     // 2. HUD Search & Filters
     const searchBar = document.getElementById('hud-search');
