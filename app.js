@@ -268,13 +268,13 @@ function update3DPositions() {
         const isMobile = width <= 768;
         if (isMobile) {
             targetCenterX = width / 2;
-            targetCenterY = height * 0.28; // Center within the top half of the screen
-            targetRadiusFactor = 0.55; // Scale down to fit screen width
+            targetCenterY = height * 0.24; // Center within the top space
+            targetRadiusFactor = 0.52; // Scale down to fit screen width and height
         } else {
             // Tablet
             targetCenterX = width / 2;
-            targetCenterY = height * 0.35;
-            targetRadiusFactor = 0.7;
+            targetCenterY = height * 0.32;
+            targetRadiusFactor = 0.65;
         }
     }
     
