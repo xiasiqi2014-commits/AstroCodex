@@ -5,6 +5,7 @@
 :root {
     /* Color Palette - Dark Constellation Theme (Default) */
     --bg-color: #020617;          /* Obsidian Space Background */
+    --bg-gradient: radial-gradient(circle at center, #090d16 0%, #020617 50%, #000000 100%);
     --surface-color: rgba(15, 23, 42, 0.7); /* Translucent Charcoal */
     --border-color: rgba(255, 255, 255, 0.08);
     --border-hover: rgba(34, 211, 238, 0.5); /* Cyan Glow border */
@@ -48,6 +49,7 @@
 /* Light Theme Variables Override (Elegant Light Star Chart) */
 body.light-theme {
     --bg-color: #f1f5f9;          /* Cartography Slate-100 */
+    --bg-gradient: radial-gradient(circle at center, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%);
     --surface-color: rgba(255, 255, 255, 0.85); /* Translucent White */
     --border-color: rgba(15, 23, 42, 0.08);
     --border-hover: rgba(109, 40, 217, 0.5); /* Violet Glow border */
@@ -83,7 +85,7 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: var(--bg-color);
+    background: var(--bg-gradient);
     font-family: var(--font-body);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;

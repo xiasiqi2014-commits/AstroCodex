@@ -238,43 +238,14 @@ function animateStarfield() {
     
     const isLightTheme = document.body.classList.contains('light-theme');
     
-    // Render space nebula background gradient
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const maxRadius = Math.max(canvas.width, canvas.height) * 0.8;
+    // Set particle color (background radial gradient is handled by CSS)
+    ctx.fillStyle = isLightTheme ? 'rgba(109, 40, 217, 0.4)' : 'rgba(255, 255, 255, 0.8)';
     
-    const grad = ctx.createRadialGradient(
-        centerX, centerY, 10,
-        centerX, centerY, maxRadius
-    );
-    
-    if (isLightTheme) {
-        // Soft cartography mapping style nebula
-        grad.addColorStop(0, '#f1f5f9');
-        grad.addColorStop(0.5, '#e2e8f0');
-        grad.addColorStop(1, '#cbd5e1');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Render soft grid stars/nodes
-        ctx.fillStyle = 'rgba(109, 40, 217, 0.15)';
-    } else {
-        // Deep obsidian cosmic nebula
-        grad.addColorStop(0, '#090d16');
-        grad.addColorStop(0.5, '#020617');
-        grad.addColorStop(1, '#000000');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Render bright cosmic stars
-        ctx.fillStyle = '#ffffff';
-    }
-    
-    // Render & update particles
+    // Render & update particles in a single path
+    ctx.beginPath();
     stars.forEach(star => {
-        ctx.beginPath();
+        ctx.moveTo(star.x + star.size, star.y);
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
         
         // Slowly float particles downwards
         star.y += star.speed;
@@ -283,6 +254,7 @@ function animateStarfield() {
             star.x = Math.random() * canvas.width;
         }
     });
+    ctx.fill();
     
     animationFrameId = requestAnimationFrame(animateStarfield);
 }
